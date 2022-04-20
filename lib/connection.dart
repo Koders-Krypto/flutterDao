@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:dao/walletConnectCred.dart';
 import 'package:ethers/ethers.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:walletconnect_dart/walletconnect_dart.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart';
-
 import 'eth_conversions.dart';
 
 class Web3Connect {
@@ -30,80 +28,6 @@ class Web3Connect {
   final BuildContext context;
   Web3Client client = Web3Client("", Client());
 
-  _onSessionRequest(int id, WCPeerMeta peerMeta) {
-    print('onSessionRequest: $id, $peerMeta');
-    showDialog(
-      context: context,
-      builder: (_) {
-        return SimpleDialog(
-          title: Column(
-            children: [
-              if (peerMeta.icons.isNotEmpty)
-                Container(
-                  height: 100.0,
-                  width: 100.0,
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Image.network(peerMeta.icons.first),
-                ),
-              Text(peerMeta.name),
-            ],
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
-          children: [
-            if (peerMeta.description.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(peerMeta.description),
-              ),
-            if (peerMeta.url.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text('Connection to ${peerMeta.url}'),
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      primary: Colors.white,
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                    ),
-                    onPressed: () async {
-                      _wcClient.approveSession(
-                        accounts: [account],
-                        // TODO: Mention Chain ID while connecting
-                        chainId: 1,
-                      );
-                      _sessionStore = _wcClient.sessionStore;
-                      await _prefs.setString('session',
-                          jsonEncode(_wcClient.sessionStore.toJson()));
-                      Navigator.pop(context);
-                    },
-                    child: const Text('APPROVE'),
-                  ),
-                ),
-                const SizedBox(width: 16.0),
-                Expanded(
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      primary: Colors.white,
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                    ),
-                    onPressed: () {
-                      _wcClient.rejectSession();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('REJECT'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   enterRpcUrl(String rpcUrl) {
     this.rpcUrl = rpcUrl;
   }
@@ -113,16 +37,6 @@ class Web3Connect {
   }
 
   connect() async {
-    _wcClient = WCClient(
-      onSessionRequest: _onSessionRequest,
-      // onFailure: _onSessionError,
-      // onDisconnect: _onSessionClosed,
-      // onEthSign: _onSign,
-      // onEthSignTransaction: _onSignTransaction,
-      // onEthSendTransaction: _onSendTransaction,
-      // onCustomRequest: (_, __) {},
-      // onConnect: _onConnect,
-    );
     await _walletConnect();
   }
 
@@ -131,22 +45,29 @@ class Web3Connect {
   }
 
   transation(Transaction transaction) async {
-    // try {
-    //   String hash = await credentials.sendTransaction(transaction);
-    //   return hash;
-    // } catch (err) {
-    //   print(err);
-    // }
-    Transaction transaction = Transaction(
-      from: EthereumAddress.fromHex(account),
-      to: EthereumAddress.fromHex("0xc160Efc3af51ebc6fC4c517cA941a6999Ce0beC0"),
-      value: EtherAmount.inWei(BigInt.from(1000000000000000000 * 0.1)),
-    );
-    EthereumWalletConnectProvider provider =
-        EthereumWalletConnectProvider(connector);
-    final credentials = WalletConnectEthereumCredentials(provider: provider);
-    // Sign the transaction
-    final txBytes = await client.sendTransaction(credentials, transaction);
+    try {
+      Transaction transaction = Transaction(
+        from: EthereumAddress.fromHex(account),
+        to: EthereumAddress.fromHex(
+            "0xc160Efc3af51ebc6fC4c517cA941a6999Ce0beC0"),
+        value: EtherAmount.inWei(BigInt.from(1000000000000000000 * 0.1)),
+      );
+      EthereumWalletConnectProvider provider =
+          EthereumWalletConnectProvider(connector);
+      final credentials = WalletConnectEthereumCredentials(provider: provider);
+
+      var snackBar = const SnackBar(
+          content: Text('Please confirm transaction in metamask'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      final txBytes = await client.sendTransaction(credentials, transaction);
+    } catch (err) {
+      print(err);
+      if (err == -32000) {
+        var snackBar = const SnackBar(
+            content: Text('Please confirm transaction in metamask'));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    }
   }
 
   getBalance() async {
