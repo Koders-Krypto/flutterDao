@@ -32,6 +32,11 @@ class Web3Connect {
   Web3Client client = Web3Client("", http.Client());
   String FantomBulls = "0xf2b4e66411905d08Cf708526fc76a399cb4Dc7F2";
 
+  late final balanceFunction;
+  late final tokenOfOwnerByIndex;
+  late final mintNft;
+  late final smartContract;
+
   enterRpcUrl(String rpcUrl) {
     this.rpcUrl = rpcUrl;
   }
@@ -117,39 +122,61 @@ class Web3Connect {
 
   loadContract() async {
     try {
-      WCEthereumTransaction ethereumTransaction = WCEthereumTransaction(
-          from: account, to: FantomBulls, gas: null, data: "data");
-      BigInt gasPrice = BigInt.parse(ethereumTransaction.gasPrice ?? '0');
       final res = await DefaultAssetBundle.of(context)
           .loadString("assets/FantomBulls.json");
-      // final resMap = jsonDecode(res);
-      // print(resMap);
-      // String path = join(dirname(Platform.script.path), "assets/FantomBulls.json");
-      // print(path);
-
-      // final abiCode = jsonEncode(res);
-      final contract = DeployedContract(
-          ContractAbi.fromJson(res, 'FantomBulls'),
+      smartContract = DeployedContract(ContractAbi.fromJson(res, 'FantomBulls'),
           EthereumAddress.fromHex(FantomBulls));
-      final balanceFunction = contract.function('balanceOf');
-      final tokenOfOwnerByIndex = contract.function('tokenOfOwnerByIndex');
 
-      final balance = await client.call(
-          contract: contract,
-          function: balanceFunction,
-          params: [EthereumAddress.fromHex(account)]);
-      var tokenIds = [];
-      int tcount = balance.first.toInt();
-      for (var i = 0; i < tcount; i++) {
-        final tokenId = await client.call(
-            contract: contract,
-            function: tokenOfOwnerByIndex,
-            params: [EthereumAddress.fromHex(account), BigInt.from(i)]);
-        tokenIds.add(tokenId.first.toInt());
-      }
-      return tokenIds.toString();
+      balanceFunction = smartContract.function('balanceOf');
+      tokenOfOwnerByIndex = smartContract.function('tokenOfOwnerByIndex');
+      mintNft = smartContract.function('mint');
     } catch (e, trace) {
-      print(e);
+      var snackBar = SnackBar(content: Text(e.toString()));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      debugPrint("failed to decode\n$e\n$trace");
+    }
+  }
+
+  balanceOf() async {
+    final balance = await client.call(
+        contract: smartContract,
+        function: balanceFunction,
+        params: [EthereumAddress.fromHex(account)]);
+    var tokenIds = [];
+    int tcount = balance.first.toInt();
+    for (var i = 0; i < tcount; i++) {
+      final tokenId = await client.call(
+          contract: smartContract,
+          function: tokenOfOwnerByIndex,
+          params: [EthereumAddress.fromHex(account), BigInt.from(i)]);
+      tokenIds.add(tokenId.first.toInt());
+    }
+    return tokenIds.toString();
+  }
+
+  mint() async {
+    try {
+      Transaction transaction = Transaction.callContract(
+          from:EthereumAddress.fromHex(account),
+          contract: smartContract,
+          function: mintNft,
+          value: EtherAmount.fromUnitAndValue(EtherUnit.ether, 1),
+          parameters: [BigInt.from(1)]);
+      EthereumWalletConnectProvider provider =
+          EthereumWalletConnectProvider(connector);
+      final credentials = WalletConnectEthereumCredentials(provider: provider);
+      bool isInstalled = await DeviceApps.isAppInstalled('io.metamask');
+      if (isInstalled) {
+        DeviceApps.openApp('io.metamask');
+        final mint = await client.sendTransaction(credentials, transaction);
+        return mint;
+      } else {
+        var snackBar = const SnackBar(content: Text('Please install metamask'));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    } catch (e, trace) {
+      var snackBar = SnackBar(content: Text(e.toString()));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
       debugPrint("failed to decode\n$e\n$trace");
     }
   }

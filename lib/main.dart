@@ -42,6 +42,7 @@ class _LoginState extends State<Login> {
         child: const Text("Log In"),
         onPressed: () async {
           await w3.connect();
+          await w3.loadContract();
           if (w3.account != "") {
             Navigator.push(context,
                 MaterialPageRoute(builder: ((context) => Home(w3: w3))));
@@ -84,19 +85,15 @@ class _HomeState extends State<Home> {
             ),
             ElevatedButton(
                 onPressed: () async {
-                  var bal = await widget.w3.getBalance();
-                  var data = await widget.w3.loadContract();
-                  
-                  // AbiType type = AbiType.FunctionType();
-                  // FunctionParameter dataType  = FunctionParameter("",
-                  //   type
-                  // );
-                  // List<FunctionParameter> params = [
-                  //   dataType
-                  // ];
-                  // widget.w3.callSmartContract(ContractFunction("balanceOf", params));
+                  // var bal = await widget.w3.getBalance();
+                  var mintStat = await widget.w3.mint() ?? "";
+                  if (mintStat != "") {
+                    var snackBar =
+                        SnackBar(content: Text('Success:' + mintStat));
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  }
                   setState(() {
-                    balance = data;
+                    balance = "0";
                   });
                 },
                 child: const Text("Get balance")),
@@ -113,10 +110,12 @@ class _HomeState extends State<Home> {
                         BigInt.from(1000000000000000000 * 0.1)),
                   );
                   String transactionHash =
-                      await widget.w3.transation(transaction);
-                  var snackBar =
-                      SnackBar(content: Text('Success:' + transactionHash));
-                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      await widget.w3.transation(transaction) ?? "";
+                  if (transactionHash != "") {
+                    var snackBar =
+                        SnackBar(content: Text('Success:' + transactionHash));
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  }
                 },
                 child: const Text("Send Fantom")),
             const SizedBox(
