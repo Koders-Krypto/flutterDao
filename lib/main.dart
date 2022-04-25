@@ -1,6 +1,7 @@
 import 'package:ethers/ethers.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:web3dart/web3dart.dart';
 import 'connection.dart';
 
 void main() {
@@ -62,8 +63,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   bool killed = false;
   String balance = "0";
-  String rpcUrl =
-      'https://rinkeby.infura.io/v3/337d4f8bfef54a519652b6b43b613a72';
+  String rpcUrl = 'https://rpc.ftm.tools/';
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +85,19 @@ class _HomeState extends State<Home> {
             ElevatedButton(
                 onPressed: () async {
                   var bal = await widget.w3.getBalance();
+                  var data = await widget.w3.loadContract();
+                  
+                  // AbiType type = AbiType.FunctionType();
+                  // FunctionParameter dataType  = FunctionParameter("",
+                  //   type
+                  // );
+                  // List<FunctionParameter> params = [
+                  //   dataType
+                  // ];
+                  // widget.w3.callSmartContract(ContractFunction("balanceOf", params));
                   setState(() {
-                    balance = bal;
+                    balance = data;
                   });
-                  // await widget.connection.credentials.sendTransaction(widget.connection);
-                  // setState(() {
-                  //   killed = true;
-                  // });
                 },
                 child: const Text("Get balance")),
             const SizedBox(
@@ -103,13 +109,16 @@ class _HomeState extends State<Home> {
                     from: EthereumAddress.fromHex(widget.w3.account),
                     to: EthereumAddress.fromHex(
                         "0xc160Efc3af51ebc6fC4c517cA941a6999Ce0beC0"),
-                    value: EtherAmount.inWei(BigInt.from(1000000000000000000 * 0.1)),
+                    value: EtherAmount.inWei(
+                        BigInt.from(1000000000000000000 * 0.1)),
                   );
-                  // String transactionHash = await widget.w3.transation(transaction);
-                  // print(transactionHash);
-                  widget.w3.transation(transaction);
+                  String transactionHash =
+                      await widget.w3.transation(transaction);
+                  var snackBar =
+                      SnackBar(content: Text('Success:' + transactionHash));
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 },
-                child: const Text("Send Ether")),
+                child: const Text("Send Fantom")),
             const SizedBox(
               height: 20,
             ),

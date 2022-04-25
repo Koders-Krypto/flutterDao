@@ -1,5 +1,10 @@
 # This is a generated file; do not edit or check into version control.
+device_apps=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/device_apps-2.2.0/
+path_provider=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider-2.0.9/
+path_provider_android=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider_android-2.0.12/
+path_provider_ios=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider_ios-2.0.8/
 path_provider_linux=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider_linux-2.1.5/
+path_provider_macos=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider_macos-2.0.5/
 path_provider_windows=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/path_provider_windows-2.0.5/
 shared_preferences=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/shared_preferences-2.0.13/
 shared_preferences_android=/Users/vijayankith/.pub-cache/hosted/pub.dartlang.org/shared_preferences_android-2.0.11/
